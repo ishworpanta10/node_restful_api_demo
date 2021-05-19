@@ -2,9 +2,20 @@ const express = require('express');
 const app = express();
 const morgan = require('morgan');
 const bodyParser = require('body-parser');
+const mongoose = require('mongoose');
 
 const productRoute = require('./api/routes/products');
 const orderRoute = require('./api/routes/orders');
+
+mongoose.connect(
+  'mongodb+srv://ishworpanta10:' +
+    process.env.MONGO_ATLAS_PW +
+    '@cluster0.dezze.mongodb.net/myFirstDatabase?retryWrites=true&w=majority',
+  {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  }
+);
 
 app.use(morgan('dev'));
 
