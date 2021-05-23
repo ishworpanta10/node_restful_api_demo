@@ -5,20 +5,28 @@ const router = express.Router();
 
 const Order = require('../models/orders');
 
+// filtering the orders for those product that only exists
+
+const Product = require('../models/products');
+
 // handle incommming GET request to /orders
 router.get('/', (req, res, next) => {
   Order.find()
-    .select('orderName orderQuantity product')
+    .select('_id orderName orderQuantity product')
+    // getting the product info through populate method
+    // 'product' we get from order schema model key
+    //and ssecond arg is used for filtering product model
+    .populate('product', 'productName')
     .exec()
     .then((orders) => {
       const response = {
         count: orders.length,
         orders: orders.map((order) => {
           return {
+            _id: order._id,
             orderName: order.orderName,
             orderQuantity: order.orderQuantity,
-            product: order.productId,
-            _id: order._id,
+            product: order.product,
             request: {
               type: 'GET',
               url: 'http://localhost:3000/orders/' + order._id,
@@ -50,19 +58,44 @@ router.post('/', (req, res, next) => {
   //   message: 'Order was created',
   //   cratedOrder: order,
   // });
-  // creating and storing    order in mongo db
-  const order = new Order({
-    _id: mongoose.Types.ObjectId(),
-    orderName: req.body.orderName,
-    orderQuantity: req.body.orderQuantity,
-    product: req.body.productId,
-  });
 
-  order
-    .save()
+  // creating and storing    order in mongo db
+
+  // filtering the orders for those product that only exists
+
+  Product.findById(req.body.productId)
+    .then((product) => {
+      // checking only the available valid product id
+      if (!product) {
+        return res.status(404).json({
+          error: 'Product not found',
+        });
+      }
+      // if null it does not run this code already returned
+      const order = new Order({
+        _id: mongoose.Types.ObjectId(),
+        orderName: req.body.orderName,
+        orderQuantity: req.body.orderQuantity,
+        product: req.body.productId,
+      });
+
+      return order.save();
+    })
     .then((result) => {
       console.log(result);
-      res.status(200).json(result);
+      res.status(200).json({
+        message: 'Order Created',
+        createdOrder: {
+          _id: result._id,
+          product: result.product,
+          orderName: result.orderName,
+          orderQuantity: result.orderQuantity,
+        },
+        request: {
+          type: 'GET',
+          url: 'http://localhost:3000/orders/' + result._id,
+        },
+      });
     })
     .catch((err) => {
       console.log(err);
@@ -74,10 +107,36 @@ router.post('/', (req, res, next) => {
 
 router.get('/:orderId', (req, res, next) => {
   const id = req.params.orderId;
-  res.status(200).json({
-    message: 'Order details',
-    orderId: id,
-  });
+  Order.findById(id)
+    .select('orderName orderQuantity product')
+    .populate('product')
+    .then((order) => {
+      console.log('From Database', order);
+      if (order) {
+        res.status(200).json({
+          order: order,
+          request: {
+            type: 'GET',
+            description: 'Get All Orders',
+            url: 'http://localhost:3000/orders',
+          },
+        });
+      } else {
+        res.status(404).json({
+          message: 'No valid order for provided id',
+        });
+      }
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).json({
+        error: err,
+      });
+    });
+  // res.status(200).json({
+  //   message: 'Order details',
+  //   orderId: id,
+  // });
 });
 
 router.delete('/:orderId', (req, res, next) => {
@@ -94,7 +153,7 @@ router.delete('/:orderId', (req, res, next) => {
           body: {
             orderName: 'String',
             orderQuantity: 'Number',
-            product: 'id',
+            productId: 'Id',
           },
         },
       });
