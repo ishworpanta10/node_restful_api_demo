@@ -6,6 +6,7 @@ const mongoose = require('mongoose');
 
 const productRoute = require('./api/routes/products');
 const orderRoute = require('./api/routes/orders');
+const userRoute = require('./api/routes/user');
 
 mongoose.connect(
   'mongodb+srv://ishworpanta10:' +
@@ -22,7 +23,7 @@ mongoose.Promise = global.Promise;
 app.use(morgan('dev'));
 
 // making uploads folders public
-app.use('/uploads',express.static('uploads'));
+app.use('/uploads', express.static('uploads'));
 
 app.use(express.json());
 app.use(
@@ -52,6 +53,7 @@ app.use((req, res, next) => {
 // Routes which should handle request
 app.use('/products', productRoute);
 app.use('/orders', orderRoute);
+app.use('/user', userRoute);
 
 // handling errors for not found resoutrce requested
 app.use((req, res, next) => {
