@@ -21,6 +21,9 @@ mongoose.Promise = global.Promise;
 
 app.use(morgan('dev'));
 
+// making uploads folders public
+app.use('/uploads',express.static('uploads'));
+
 app.use(express.json());
 app.use(
   express.urlencoded({

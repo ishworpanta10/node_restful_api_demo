@@ -16,25 +16,44 @@ const storage = multer.diskStorage({
     cb(null, './uploads/');
   },
   filename: function (req, file, cb) {
-    cb(null, new Date().toISOString() + file.originalname);
+    cb(null, new Date().toISOString() + '_' + file.originalname);
   },
 });
 
-const upload = multer({ storage: storage });
+const fileFilter = (req, file, cb) => {
+  if (file.mimetype === 'image/jpeg' || file.mimetype === 'image/png') {
+    // accept file
+    cb(null, true);
+  } else {
+    //reject a file
+    cb(null, false);
+    // we can pass Error("Err Msg") instead of null also
+  }
+};
+
+const upload = multer({
+  storage: storage,
+  limits: {
+    // 1024 * 1024 = 1Mb * 5 = 5mb
+    fileSize: 1024 * 1024 * 5,
+  },
+  fileFilter: fileFilter,
+});
 
 router.get('/', (req, res, next) => {
   // getting all the products from db
   Product.find()
-    .select('productName productPrice _id')
+    .select('_id  productName productPrice productImage')
     .exec()
     .then((docs) => {
       const response = {
         count: docs.length,
         products: docs.map((doc) => {
           return {
+            _id: doc._id,
             productName: doc.productName,
             productPrice: doc.productPrice,
-            _id: doc._id,
+            productImage: doc.productImage,
             request: {
               type: 'GET',
               url: 'http://localhost:3000/products/' + doc._id,
@@ -75,6 +94,7 @@ router.post('/', upload.single('productImage'), (req, res, next) => {
     _id: new mongoose.Types.ObjectId(),
     productName: req.body.productName,
     productPrice: req.body.productPrice,
+    productImage: req.file.path,
   });
 
   product
@@ -87,6 +107,7 @@ router.post('/', upload.single('productImage'), (req, res, next) => {
         createdProduct: {
           productName: result.productName,
           productPrice: result.productPrice,
+          productImage: result.productImage,
           _id: result._id,
           request: {
             type: 'GET',
@@ -105,7 +126,7 @@ router.get('/:productId', (req, res, next) => {
   const id = req.params.productId;
 
   Product.findById(id)
-    .select('productName productPrice _id')
+    .select('_id productName productPrice productImage')
     .exec()
     .then((doc) => {
       console.log('From the database', doc);
