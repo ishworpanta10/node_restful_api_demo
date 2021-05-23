@@ -80,9 +80,46 @@ router.post('/signup', (req, res, next) => {
     });
 });
 
+router.post('/login', (req, res, next) => {
+  User.find({ email: req.body.email })
+    // we can also use findone to get sigle user not array
+    .exec()
+    .then((user) => {
+      // here user is in array but we can have only one because we filter unique email in signup
+      if (user.length < 1) {
+        // if no user email exist in db
+        return res.status(200).json({
+          message: 'Authorization Failed',
+        });
+      }
+      // for password
+      bcrypt.compare(req.body.password, user[0].password, (err, result) => {
+        if (err) {
+          return res.status(200).json({
+            message: 'Authentication Failed',
+          });
+        }
+        if (result) {
+          res.status(200).json({
+            message: 'Authentication Success',
+          });
+        }
+        res.status(200).json({
+          message: 'Authentication Failed',
+        });
+      });
+    })
+    .catch((err) => {
+      console.log(err);
+      res.status(500).json({
+        error: err,
+      });
+    });
+});
+
 router.delete('/:userId', (req, res, next) => {
   const id = req.params.userId;
-  User.remove({ _id: id })
+  User.findByIdAndRemove({ _id: id })
     .exec()
     .then((result) => {
       if (result) {
