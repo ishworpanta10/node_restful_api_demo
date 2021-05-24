@@ -11,6 +11,9 @@ const Product = require('../models/products');
 
 const multer = require('multer');
 
+// for auth jwt
+const checkAuth = require('../middleware/check_auth');
+
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
     cb(null, './uploads/');
@@ -81,7 +84,7 @@ router.get('/', (req, res, next) => {
   // });
 });
 
-router.post('/', upload.single('productImage'), (req, res, next) => {
+router.post('/', checkAuth, upload.single('productImage'), (req, res, next) => {
   // creating new product to post
   // const product = {
   //   productName: req.body.productName,
@@ -163,7 +166,7 @@ router.get('/:productId', (req, res, next) => {
   // }
 });
 
-router.patch('/:productId', (req, res, next) => {
+router.patch('/:productId', checkAuth, (req, res, next) => {
   const id = req.params.productId;
   const updateOps = {};
   for (const ops of req.body) {
@@ -197,7 +200,7 @@ router.patch('/:productId', (req, res, next) => {
   // });
 });
 
-router.delete('/:productId', (req, res, next) => {
+router.delete('/:productId', checkAuth, (req, res, next) => {
   const id = req.params.productId;
   Product.remove({ _id: id })
     .exec()

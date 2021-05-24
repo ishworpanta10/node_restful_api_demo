@@ -5,12 +5,14 @@ const router = express.Router();
 
 const Order = require('../models/orders');
 
+const checkAuth = require('..//middleware/check_auth');
+
 // filtering the orders for those product that only exists
 
 const Product = require('../models/products');
 
 // handle incommming GET request to /orders
-router.get('/', (req, res, next) => {
+router.get('/', checkAuth, (req, res, next) => {
   Order.find()
     .select('_id orderName orderQuantity product')
     // getting the product info through populate method
@@ -47,7 +49,7 @@ router.get('/', (req, res, next) => {
   // });
 });
 
-router.post('/', (req, res, next) => {
+router.post('/', checkAuth, (req, res, next) => {
   // creating order
   // const order = {
   //   orderId: req.body.orderId,
@@ -105,7 +107,7 @@ router.post('/', (req, res, next) => {
     });
 });
 
-router.get('/:orderId', (req, res, next) => {
+router.get('/:orderId', checkAuth, (req, res, next) => {
   const id = req.params.orderId;
   Order.findById(id)
     .select('orderName orderQuantity product')
@@ -139,7 +141,7 @@ router.get('/:orderId', (req, res, next) => {
   // });
 });
 
-router.delete('/:orderId', (req, res, next) => {
+router.delete('/:orderId', checkAuth, (req, res, next) => {
   const id = req.params.orderId;
   Order.remove({ _id: id })
     .exec()
